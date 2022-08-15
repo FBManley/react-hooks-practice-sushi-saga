@@ -6,28 +6,42 @@ const API = "http://localhost:3001/sushis";
 
 function App() {
 const [sushis, setSushis] = useState([])
-const [position, setPosition] = useState(0)
-const [eatenSushi, setEaten] = useState([])
+const [wallet, setWallet] = useState([100])
 
-useEffect(async () => {
-  const res = await fetch(API)
-  const sushiData = await res.json()
 
-  setSushis(sushiData)
-  console.log(sushiData)
+useEffect(() =>{
+  fetch(API)
+  .then((r) => r.json())
+  .then((sushis) => {
+    const updatedSushis = sushis.map((sushi) => {
+      return {...sushi, eaten: false}
+    });
+    setSushis(updatedSushis)
+    })
 }, [])
 
-const handleEatSushi = (id) => {
-  if(!eatenSushi.includes(id)){
-    const newEaten = [...eatenSushi, id]
-    setEaten(newEaten)
+function handleEatSushi(eatenSushi) {
+  if (wallet >= eatenSushi.price) {
+    const updatedSushis = sushis.map((sushi) => {
+      if (sushi.id === eatenSushi.id) return { ...sushi, eaten: true };
+      return sushi;
+    });
+
+    setSushis(updatedSushis);
+    setWallet((wallet) => wallet - eatenSushi.price);
+  } else {
+    alert("Need more 💸");
   }
 }
+const eatenSushis = sushis.filter((sushi) => sushi.eaten);
 
+function handleAddMoney(moreMoney){
+  setWallet((wallet) => wallet + moreMoney)
+}
   return (
     <div className="app">
-      <SushiContainer eatenSushi={handleEatSushi} sushis={sushis.slice(position, position + 4)}/>
-      <Table plates={eatenSushi}/>
+      <SushiContainer sushis={sushis} onEatSushi={handleEatSushi}/>
+      <Table wallet={wallet} plates={eatenSushis} onAddMoney={handleAddMoney} />
     </div>
   );
 }
